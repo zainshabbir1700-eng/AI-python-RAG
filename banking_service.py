@@ -4,9 +4,22 @@ from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-app = FastAPI(title="Banking Risk, RAG & Reconciliation Service")
+from fastapi.staticfiles import StaticFiles
 
-DATABASE_URL = "postgresql://postgres.xcfwtqxfvvhufxabsted:%2AZ%40in04544%2A@aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
+from dotenv import load_dotenv
+load_dotenv()
+
+from kyc import kyc_router
+
+app = FastAPI(title="Banking Risk, RAG & Reconciliation Service")
+app.include_router(kyc_router)
+
+# Mount local uploads directory for document access
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 def get_db():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
